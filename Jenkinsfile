@@ -14,7 +14,7 @@ node {
   ]) {
     try {
       stage ('Build package') {
-          git ${GITHUB_REPO_URL}
+          git env.GITHUB_REPO_URL
           sh "git checkout ${GIT_REF}"
           sh "COMPOSER_CACHE_DIR=/dev/null composer install --no-suggest"
           sh "./bin/phing build-multisite-dist -Dcomposer.bin=`which composer`"
