@@ -9,7 +9,7 @@ properties([
 ])
 
 node('master') {
-  env.slackMessage = "<${env.BUILD_URL}|${env.GITHUB_RELEASE_TITLE} build ${env.BUILD_NUMBER}>"
+  env.slackMessage = "<${env.BUILD_URL}|Release ${env.GITHUB_RELEASE_TITLE} build>"
   slackSend color: "good", message: "${env.slackMessage} started."
   withCredentials([
     [$class: 'UsernamePasswordMultiBinding', credentialsId: 'GITHUB_REPO_AUTH', usernameVariable: 'GITHUB_REPO_USER', passwordVariable: 'GITHUB_REPO_TOKEN']
