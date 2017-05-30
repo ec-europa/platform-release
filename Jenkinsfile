@@ -8,7 +8,7 @@ properties([
   ])
 ])
 
-node {
+node('master') {
   withCredentials([
     [$class: 'UsernamePasswordMultiBinding', credentialsId: 'GITHUB_REPO_AUTH', usernameVariable: 'GITHUB_REPO_USER', passwordVariable: 'GITHUB_REPO_TOKEN']
   ]) {
