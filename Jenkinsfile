@@ -9,7 +9,8 @@ properties([
 ])
 
 node('release') {
-  env.GITHUB_RELEASE_FILE_PATH = env.RELEASE_PATH + "/" + env.GITHUB_REPO_NAME + "-" + env.GITHUB_RELEASE_TAG + ".tar.gz"
+  env.GITHUB_RELEASE_FILE_NAME = env.GITHUB_REPO_NAME + "-" + env.GITHUB_RELEASE_TAG + ".tar.gz"
+  env.GITHUB_RELEASE_FILE_PATH = env.RELEASE_PATH + "/" + env.GITHUB_RELEASE_FILE_NAME
   env.slackMessage = "<${env.BUILD_URL}|Release ${env.GITHUB_RELEASE_TITLE} build>"
   slackSend color: "good", message: "${env.slackMessage} started."
   withCredentials([
