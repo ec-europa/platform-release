@@ -52,7 +52,7 @@ node('release') {
           --repo ${GITHUB_REPO_NAME} \
           --tag ${GITHUB_RELEASE_TAG} \
           --name "${GITHUB_RELEASE_FILE_NAME}" \
-          --label "${GITHUB_RELEASE_FILE_DESC}" \
+          --label "${GITHUB_RELEASE_FILE_NAME}" \
           --file ${GITHUB_RELEASE_FILE_PATH}'''
       }
     }
