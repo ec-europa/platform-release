@@ -30,7 +30,7 @@ node('release') {
           ).trim()
       }
       stage ('Build package') {
-          git env.GITHUB_REPO_URL
+          git credentialsId: 'GITHUB_REPO_AUTH', url: env.GITHUB_REPO_URL
           sh "git checkout ${GIT_REF}"
           sh "COMPOSER_CACHE_DIR=/dev/null composer install --no-suggest"
           sh "./bin/phing build-multisite-dist -Dcomposer.bin=`which composer`"
@@ -56,7 +56,6 @@ node('release') {
         echo "Executing following command: \n${github_release_cmd}"
         sh github_release_cmd
       }
-      
       stage ('Upload file') {
         sh '''github-release upload \
           --security-token ${GITHUB_REPO_TOKEN} \
@@ -66,6 +65,19 @@ node('release') {
           --name "${GITHUB_RELEASE_FILE_NAME}" \
           --label "${GITHUB_RELEASE_FILE_NAME}" \
           --file ${GITHUB_RELEASE_FILE_PATH}'''
+      }
+      stage ('Cleanup') {
+        cleanWs()
+      }
+      stage ('Update changelog') {
+          git credentialsId: 'GITHUB_REPO_AUTH', url: env.GITHUB_REPO_URL
+          sh '''github-release info \
+            --security-token ${GITHUB_REPO_TOKEN} \
+            --user ${GITHUB_REPO_USER} \
+            --repo ${GITHUB_REPO_NAME} \
+            --json | jq -r '.Releases[] | "# \\(.name)\\n\\(.body)\\n"' > CHANGELOG.md'''
+          sh "git add CHANGELOG.md && git commit -m 'Update changelog'"
+          sh "git push https://${GITHUB_REPO_USER}:${GITHUB_REPO_TOKEN}@github.com/${GITHUB_REPO_USER}/${GITHUB_REPO_NAME}.git"
       }
     }
     catch (err) {
