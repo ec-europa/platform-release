@@ -75,7 +75,7 @@ node('release') {
             --security-token ${GITHUB_REPO_TOKEN} \
             --user ${GITHUB_REPO_USER} \
             --repo ${GITHUB_REPO_NAME} \
-            --json | jq -r '.Releases[] | "# \\(.name)\\n\\(.body)\\n"' > CHANGELOG.md'''
+            --json | jq --arg x 'T' -r '.Releases[] | "# \\(.name), \\(.created_at | split($x)[0])\\n\\(.body)\\n"' > CHANGELOG.md'''
           sh "git add CHANGELOG.md && git commit -m 'Update changelog'"
           sh "git push https://${GITHUB_REPO_USER}:${GITHUB_REPO_TOKEN}@github.com/${GITHUB_REPO_USER}/${GITHUB_REPO_NAME}.git"
       }
