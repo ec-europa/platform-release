@@ -1,9 +1,8 @@
 properties([
   parameters([
-    string(name: 'GIT_REF', defaultValue: '', description: 'Please enter the commit reference from which to build the tag.'),
+    string(name: 'GITHUB_PR_ID', defaultValue: '', description: 'Please enter the pull request ID from which to build the tag.'),
     string(name: 'GITHUB_RELEASE_TAG', defaultValue: '', description: 'Please enter the tag version for the release.'),
     string(name: 'GITHUB_RELEASE_TITLE', defaultValue: '', description: 'Please enter the release title.'),
-    text(name: 'GITHUB_RELEASE_DESC', defaultValue: '', description: 'Please describe this release. You can use the Markdown markup.'),
     booleanParam(name: 'GITHUB_RELEASE_STATE', defaultValue: true, description: 'Please identify the release state. By default the release is set as a pre-release.'),
   ])
 ])
@@ -11,12 +10,25 @@ properties([
 node('release') {
   env.GITHUB_RELEASE_FILE_NAME = env.GITHUB_REPO_NAME + "-" + env.GITHUB_RELEASE_TAG + ".tar.gz"
   env.GITHUB_RELEASE_FILE_PATH = env.RELEASE_PATH + "/" + env.GITHUB_RELEASE_FILE_NAME
+  env.GITHUB_PR_INFO_FILE_PATH = "/tmp/${GITHUB_REPO_NAME}-PR-${GITHUB_PR_ID}"
   env.slackMessage = "<${env.BUILD_URL}|Release ${env.GITHUB_RELEASE_TITLE} build>"
   slackSend color: "good", message: "${env.slackMessage} started."
   withCredentials([
     [$class: 'UsernamePasswordMultiBinding', credentialsId: 'GITHUB_REPO_AUTH', usernameVariable: 'GITHUB_REPO_USER', passwordVariable: 'GITHUB_REPO_TOKEN']
   ]) {
     try {
+      stage ('Init') {
+          env.GITHUB_API_BASE_URL = "https://api.github.com/repos/${GITHUB_REPO_USER}/${GITHUB_REPO_NAME}"
+          sh "curl -s -o ${GITHUB_PR_INFO_FILE_PATH} ${GITHUB_API_BASE_URL}/pulls/${GITHUB_PR_ID}?access_token=${GITHUB_REPO_TOKEN}"
+          env.GIT_REF = sh(
+            script: "jq -r '.merge_commit_sha' ${GITHUB_PR_INFO_FILE_PATH}",
+            returnStdout: true
+          ).trim()
+          env.GITHUB_RELEASE_DESC = sh(
+            script: "jq -r '.body' ${GITHUB_PR_INFO_FILE_PATH}",
+            returnStdout: true
+          ).trim()
+      }
       stage ('Build package') {
           git env.GITHUB_REPO_URL
           sh "git checkout ${GIT_REF}"
