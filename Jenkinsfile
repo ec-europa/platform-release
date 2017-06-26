@@ -72,7 +72,7 @@ node('release') {
             --security-token ${GITHUB_REPO_TOKEN} \
             --user ${GITHUB_REPO_USER} \
             --repo ${GITHUB_REPO_NAME} \
-            --json | jq --arg x 'T' -r '.Releases[] | "# \\(.name), \\(.created_at | split($x)[0])\\n\\(.body)\\n"' > ${GITHUB_RELEASE_CHANGELOG_PATH}'''
+            --json | jq --arg x 'T' -r '.Releases[] | select(.id >= 5208235) | "# \\(.name), \\(.created_at | split($x)[0])\\n\\(.body)\\n"' > ${GITHUB_RELEASE_CHANGELOG_PATH}'''
           sh '''github-release upload \
             --security-token ${GITHUB_REPO_TOKEN} \
             --user ${GITHUB_REPO_USER} \
