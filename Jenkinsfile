@@ -10,6 +10,7 @@ properties([
 node('release') {
   env.GITHUB_RELEASE_FILE_NAME = env.GITHUB_REPO_NAME + "-" + env.GITHUB_RELEASE_TAG + ".tar.gz"
   env.GITHUB_RELEASE_FILE_PATH = env.RELEASE_PATH + "/" + env.GITHUB_RELEASE_FILE_NAME
+  env.GITHUB_RELEASE_CHANGELOG_PATH = env.RELEASE_PATH + "/CHANGELOG-" + env.GITHUB_RELEASE_TAG + ".txt"
   env.GITHUB_PR_INFO_FILE_PATH = "/tmp/${GITHUB_REPO_NAME}-PR-${GITHUB_PR_ID}"
   env.slackMessage = "<${env.BUILD_URL}|Release ${env.GITHUB_RELEASE_TITLE} build>"
   slackSend color: "good", message: "${env.slackMessage} started."
@@ -66,18 +67,20 @@ node('release') {
           --label "${GITHUB_RELEASE_FILE_NAME}" \
           --file ${GITHUB_RELEASE_FILE_PATH}'''
       }
-      stage ('Cleanup') {
-        cleanWs()
-      }
-      stage ('Update changelog') {
-          git credentialsId: 'GITHUB_REPO_AUTH', url: env.GITHUB_REPO_URL
+      stage ('Upload changelog') {
           sh '''github-release info \
             --security-token ${GITHUB_REPO_TOKEN} \
             --user ${GITHUB_REPO_USER} \
             --repo ${GITHUB_REPO_NAME} \
-            --json | jq --arg x 'T' -r '.Releases[] | "# \\(.name), \\(.created_at | split($x)[0])\\n\\(.body)\\n"' > CHANGELOG.md'''
-          sh "git add CHANGELOG.md && git commit -m 'Update changelog'"
-          sh "git push https://${GITHUB_REPO_USER}:${GITHUB_REPO_TOKEN}@github.com/${GITHUB_REPO_USER}/${GITHUB_REPO_NAME}.git"
+            --json | jq --arg x 'T' -r '.Releases[] | "# \\(.name), \\(.created_at | split($x)[0])\\n\\(.body)\\n"' > ${GITHUB_RELEASE_CHANGELOG_PATH}'''
+          sh '''github-release upload \
+            --security-token ${GITHUB_REPO_TOKEN} \
+            --user ${GITHUB_REPO_USER} \
+            --repo ${GITHUB_REPO_NAME} \
+            --tag ${GITHUB_RELEASE_TAG} \
+            --name "CHANGELOG.txt" \
+            --label "CHANGELOG" \
+            --file ${GITHUB_RELEASE_CHANGELOG_PATH}'''
       }
     }
     catch (err) {
