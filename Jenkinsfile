@@ -10,6 +10,7 @@ properties([
 node('release') {
   env.GITHUB_RELEASE_FILE_NAME = env.GITHUB_REPO_NAME + "-" + env.GITHUB_RELEASE_TAG + ".tar.gz"
   env.GITHUB_RELEASE_FILE_PATH = env.RELEASE_PATH + "/" + env.GITHUB_RELEASE_FILE_NAME
+  env.GITHUB_RELEASE_CHANGELOG_PATH = env.RELEASE_PATH + "/CHANGELOG-" + env.GITHUB_RELEASE_TAG + ".txt"
   env.GITHUB_PR_INFO_FILE_PATH = "/tmp/${GITHUB_REPO_NAME}-PR-${GITHUB_PR_ID}"
   env.slackMessage = "<${env.BUILD_URL}|Release ${env.GITHUB_RELEASE_TITLE} build>"
   slackSend color: "good", message: "${env.slackMessage} started."
@@ -30,7 +31,7 @@ node('release') {
           ).trim()
       }
       stage ('Build package') {
-          git env.GITHUB_REPO_URL
+          git credentialsId: 'GITHUB_REPO_AUTH', url: env.GITHUB_REPO_URL
           sh "git checkout ${GIT_REF}"
           sh "COMPOSER_CACHE_DIR=/dev/null composer install --no-suggest"
           sh "./bin/phing build-multisite-dist -Dcomposer.bin=`which composer`"
@@ -56,7 +57,6 @@ node('release') {
         echo "Executing following command: \n${github_release_cmd}"
         sh github_release_cmd
       }
-      
       stage ('Upload file') {
         sh '''github-release upload \
           --security-token ${GITHUB_REPO_TOKEN} \
@@ -66,6 +66,21 @@ node('release') {
           --name "${GITHUB_RELEASE_FILE_NAME}" \
           --label "${GITHUB_RELEASE_FILE_NAME}" \
           --file ${GITHUB_RELEASE_FILE_PATH}'''
+      }
+      stage ('Upload changelog') {
+          sh '''github-release info \
+            --security-token ${GITHUB_REPO_TOKEN} \
+            --user ${GITHUB_REPO_USER} \
+            --repo ${GITHUB_REPO_NAME} \
+            --json | jq --arg x 'T' -r '.Releases[] | select(.id >= 5208235) | "# \\(.name), \\(.created_at | split($x)[0])\\n\\(.body)\\n"' > ${GITHUB_RELEASE_CHANGELOG_PATH}'''
+          sh '''github-release upload \
+            --security-token ${GITHUB_REPO_TOKEN} \
+            --user ${GITHUB_REPO_USER} \
+            --repo ${GITHUB_REPO_NAME} \
+            --tag ${GITHUB_RELEASE_TAG} \
+            --name "CHANGELOG.md" \
+            --label "CHANGELOG.md" \
+            --file ${GITHUB_RELEASE_CHANGELOG_PATH}'''
       }
     }
     catch (err) {
