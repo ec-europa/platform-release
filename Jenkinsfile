@@ -78,8 +78,8 @@ node('release') {
             --user ${GITHUB_REPO_USER} \
             --repo ${GITHUB_REPO_NAME} \
             --tag ${GITHUB_RELEASE_TAG} \
-            --name "CHANGELOG.txt" \
-            --label "CHANGELOG" \
+            --name "CHANGELOG.md" \
+            --label "CHANGELOG.md" \
             --file ${GITHUB_RELEASE_CHANGELOG_PATH}'''
       }
     }
