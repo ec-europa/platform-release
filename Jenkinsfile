@@ -20,7 +20,7 @@ node('release') {
     try {
       stage ('Init') {
           env.GITHUB_API_BASE_URL = "https://api.github.com/repos/${GITHUB_REPO_USER}/${GITHUB_REPO_NAME}"
-          sh "curl -s -o ${GITHUB_PR_INFO_FILE_PATH} ${GITHUB_API_BASE_URL}/pulls/${GITHUB_PR_ID}?access_token=${GITHUB_REPO_TOKEN}"
+          sh "curl -s -o ${GITHUB_PR_INFO_FILE_PATH} ${GITHUB_API_BASE_URL}/pulls/${GITHUB_PR_ID}"
           env.GIT_REF = sh(
             script: "jq -r '.merge_commit_sha' ${GITHUB_PR_INFO_FILE_PATH}",
             returnStdout: true
