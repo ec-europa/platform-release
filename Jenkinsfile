@@ -29,9 +29,13 @@ node('release') {
             script: "jq -r '.body' ${GITHUB_PR_INFO_FILE_PATH}",
             returnStdout: true
           ).trim()
+          env.GITHUB_BRANCH = sh(
+            script:"jq -r '.base.ref' /tmp/platform-dev-PR-2465",
+            returnStdout: true
+          ).trim()
       }
       stage ('Build package') {
-          git credentialsId: 'GITHUB_REPO_AUTH', url: env.GITHUB_REPO_URL
+          git([url: "${env.GITHUB_REPO_URL}", branch: "${env.GITHUB_BRANCH}", credentialsId: 'GITHUB_REPO_AUTH'])
           sh "git checkout ${GIT_REF}"
           sh "COMPOSER_CACHE_DIR=/dev/null composer install --no-suggest"
           sh "./bin/phing build-multisite-dist -Dcomposer.bin=`which composer`"
