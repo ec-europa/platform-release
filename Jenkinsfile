@@ -30,7 +30,7 @@ node('release') {
             returnStdout: true
           ).trim()
           env.GITHUB_BRANCH = sh(
-            script:"jq -r '.base.ref' /tmp/platform-dev-PR-2465",
+            script:"jq -r '.base.ref' ${GITHUB_PR_INFO_FILE_PATH}",
             returnStdout: true
           ).trim()
       }
